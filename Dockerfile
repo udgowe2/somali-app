@@ -5,6 +5,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 RUN npm ci
 
 FROM base AS builder
@@ -18,18 +19,27 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+RUN apk add --no-cache postgresql-client
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/pg ./node_modules/pg
+COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY scripts/start.sh ./start.sh
+
+RUN chmod +x ./start.sh
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["./start.sh"]
