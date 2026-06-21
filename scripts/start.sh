@@ -11,7 +11,7 @@ c.connect().then(() => { c.end(); process.exit(0); }).catch(() => process.exit(1
 done
 
 echo "Datenbank bereit — Schema synchronisieren..."
-npx prisma db push --skip-generate
+node /app/node_modules/prisma/build/index.js db push --skip-generate
 
 echo "App starten..."
 exec node server.js
