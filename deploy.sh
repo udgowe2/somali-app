@@ -11,6 +11,10 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+echo "Verzeichnisse vorbereiten..."
+mkdir -p data/postgres
+mkdir -p public/audio
+
 echo "Code aktualisieren..."
 git pull
 
