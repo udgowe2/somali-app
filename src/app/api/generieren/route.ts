@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic();
-
 export async function POST(req: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY fehlt in der .env Datei" }, { status: 500 });
+  }
+
   const { situation_de, situation_so } = await req.json();
 
   const prompt = `Du bist Experte für Somali-Sprachunterricht für deutschsprachige Kinder (6–12 Jahre).
@@ -56,17 +58,22 @@ Regeln:
 - Grammatik: eine einfache Regel kindgerecht erklärt
 - Eltern-Tipps: 2 konkrete Übungsvorschläge für zuhause`;
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2000,
-    messages: [{ role: "user", content: prompt }],
-  });
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2000,
+      messages: [{ role: "user", content: prompt }],
+    });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "";
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    return NextResponse.json({ error: "Kein gültiges JSON" }, { status: 500 });
+    const text = message.content[0].type === "text" ? message.content[0].text : "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return NextResponse.json({ error: "Claude hat kein gültiges JSON zurückgegeben" }, { status: 500 });
+    }
+    return NextResponse.json(JSON.parse(jsonMatch[0]));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  return NextResponse.json(JSON.parse(jsonMatch[0]));
 }
