@@ -3,7 +3,7 @@ services:
     build:
       context: .
       target: builder
-    command: npx prisma db push --skip-generate
+    command: npx prisma db push
     environment:
       DATABASE_URL: postgresql://somali:${DB_PASSWORD}@db:5432/somali_db
     depends_on:
