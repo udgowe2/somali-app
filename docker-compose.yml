@@ -1,0 +1,40 @@
+services:
+  somali-app:
+    build: .
+    image: somali-app:latest
+    container_name: somali-app
+    restart: unless-stopped
+    ports:
+      - "8766:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./public/audio:/app/public/audio
+    environment:
+      DATABASE_URL: postgresql://somali:${DB_PASSWORD}@db:5432/somali_db
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      NODE_ENV: production
+      TZ: Europe/Zurich
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16-alpine
+    container_name: somali-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: somali
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: somali_db
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U somali -d somali_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

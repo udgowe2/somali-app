@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Situation {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  name_de     String
+  name_so     String
+  emoji       String
+  reihenfolge Int       @default(0)
+  aktiv       Boolean   @default(true)
+  erstellt_am DateTime  @default(now())
+
+  phrasen     Phrase[]
+  dialoge     Dialog[]
+  uebungen    Uebung[]
+  fortschritt Fortschritt[]
+}
+
+model Phrase {
+  id           Int       @id @default(autoincrement())
+  situation    Situation @relation(fields: [situation_id], references: [id], onDelete: Cascade)
+  situation_id Int
+  somali       String
+  deutsch      String
+  audio_pfad   String?
+  reihenfolge  Int       @default(0)
+}
+
+model Dialog {
+  id           Int       @id @default(autoincrement())
+  situation    Situation @relation(fields: [situation_id], references: [id], onDelete: Cascade)
+  situation_id Int
+  titel        String
+  zeilen       DialogZeile[]
+}
+
+model DialogZeile {
+  id          Int     @id @default(autoincrement())
+  dialog      Dialog  @relation(fields: [dialog_id], references: [id], onDelete: Cascade)
+  dialog_id   Int
+  sprecher    String
+  somali      String
+  deutsch     String
+  ist_luecke  Boolean @default(false)
+  reihenfolge Int     @default(0)
+}
+
+model Uebung {
+  id           Int       @id @default(autoincrement())
+  situation    Situation @relation(fields: [situation_id], references: [id], onDelete: Cascade)
+  situation_id Int
+  typ          UebungTyp
+  inhalt       Json
+  reihenfolge  Int       @default(0)
+}
+
+enum UebungTyp {
+  ZUORDNEN
+  LUECKENTEXT
+  UEBERSETZEN
+  RICHTIG_FALSCH
+}
+
+model Kind {
+  id          Int       @id @default(autoincrement())
+  name        String
+  avatar      String    @default("👧")
+  erstellt_am DateTime  @default(now())
+
+  fortschritt  Fortschritt[]
+  eltern_links ElternLink[]
+}
+
+model Fortschritt {
+  id            Int       @id @default(autoincrement())
+  kind          Kind      @relation(fields: [kind_id], references: [id], onDelete: Cascade)
+  kind_id       Int
+  situation     Situation @relation(fields: [situation_id], references: [id], onDelete: Cascade)
+  situation_id  Int
+  sterne        Int       @default(0)
+  abgeschlossen Boolean   @default(false)
+  beendet_am    DateTime?
+
+  @@unique([kind_id, situation_id])
+}
+
+model ElternLink {
+  id          Int      @id @default(autoincrement())
+  kind        Kind     @relation(fields: [kind_id], references: [id], onDelete: Cascade)
+  kind_id     Int
+  token       String   @unique @default(cuid())
+  erstellt_am DateTime @default(now())
+}
