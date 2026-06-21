@@ -19,7 +19,8 @@ type GenerierteDaten = {
 
 export default function NeuesSituation() {
   const router = useRouter();
-  const [schritt, setSchritt] = useState<"form" | "generieren" | "vorschau" | "speichern">("form");
+  const [schritt, setSchritt] = useState<"form" | "generieren" | "vorschau">("form");
+  const [isSpeichern, setIsSpeichern] = useState(false);
   const [name_de, setNameDe] = useState("");
   const [name_so, setNameSo] = useState("");
   const [emoji, setEmoji] = useState("👋");
@@ -48,7 +49,7 @@ export default function NeuesSituation() {
 
   async function speichern() {
     if (!daten) return;
-    setSchritt("speichern");
+    setIsSpeichern(true);
     try {
       const slug = name_de.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       const res = await fetch("/api/situationen", {
@@ -65,7 +66,7 @@ export default function NeuesSituation() {
       router.push("/lehrer");
     } catch (e) {
       setFehler("Fehler beim Speichern: " + (e as Error).message);
-      setSchritt("vorschau");
+      setIsSpeichern(false);
     }
   }
 
@@ -172,9 +173,9 @@ export default function NeuesSituation() {
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors">
                 Nochmal generieren
               </button>
-              <button onClick={speichern} disabled={schritt === "speichern"}
+              <button onClick={speichern} disabled={isSpeichern}
                 className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl transition-colors">
-                {schritt === "speichern" ? "Wird gespeichert..." : "✓ Speichern"}
+                {isSpeichern ? "Wird gespeichert..." : "✓ Speichern"}
               </button>
             </div>
           </div>
