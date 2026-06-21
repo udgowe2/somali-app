@@ -1,4 +1,16 @@
 services:
+  migrate:
+    build:
+      context: .
+      target: builder
+    command: npx prisma db push --skip-generate
+    environment:
+      DATABASE_URL: postgresql://somali:${DB_PASSWORD}@db:5432/somali_db
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   somali-app:
     build: .
     image: somali-app:latest
@@ -9,6 +21,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./public/audio:/app/public/audio
     environment:
