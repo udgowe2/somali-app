@@ -1,0 +1,7 @@
+node_modules
+.next
+data
+public/audio
+.env
+.env.local
+.git
